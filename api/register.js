@@ -1,4 +1,3 @@
-```javascript
 const { neon } = require("@neondatabase/serverless");
 const bcrypt = require("bcryptjs");
 
@@ -117,4 +116,3 @@ module.exports = async (req, res) => {
     });
   }
 };
-```

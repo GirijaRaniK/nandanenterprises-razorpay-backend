@@ -1,9 +1,38 @@
+```javascript
 const { neon } = require("@neondatabase/serverless");
 const bcrypt = require("bcryptjs");
 
 const sql = neon(process.env.DATABASE_URL);
 
 module.exports = async (req, res) => {
+  // =========================================================
+  // CORS
+  // =========================================================
+
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "https://girijaranik.github.io"
+  );
+
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "POST, OPTIONS"
+  );
+
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type"
+  );
+
+  // Browser preflight request
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  // =========================================================
+  // METHOD CHECK
+  // =========================================================
+
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed",
@@ -13,7 +42,10 @@ module.exports = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Basic validation
+    // =======================================================
+    // BASIC VALIDATION
+    // =======================================================
+
     if (!name || !email || !password) {
       return res.status(400).json({
         error: "Name, email and password are required",
@@ -35,7 +67,10 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Check whether email already exists
+    // =======================================================
+    // CHECK EXISTING EMAIL
+    // =======================================================
+
     const existingUser = await sql`
       SELECT id
       FROM users
@@ -49,20 +84,31 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Hash password
+    // =======================================================
+    // HASH PASSWORD
+    // =======================================================
+
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Create user
+    // =======================================================
+    // CREATE USER
+    // =======================================================
+
     const result = await sql`
       INSERT INTO users (name, email, password_hash)
       VALUES (${cleanName}, ${cleanEmail}, ${passwordHash})
       RETURNING id, name, email, created_at
     `;
 
+    // =======================================================
+    // SUCCESS
+    // =======================================================
+
     return res.status(201).json({
       message: "Registration successful",
       user: result[0],
     });
+
   } catch (error) {
     console.error("Registration error:", error);
 
@@ -71,3 +117,4 @@ module.exports = async (req, res) => {
     });
   }
 };
+```
